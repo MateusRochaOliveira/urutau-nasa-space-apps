@@ -6,7 +6,14 @@ import plotly.graph_objects as go
 import ephem
 import streamlit as st
 
-st.set_page_config(page_title="URUTAU | Smart Planting Calendar", page_icon="🦉", layout="wide")
+ICON_PATH = "assets/icon_urutau.svg"
+LOGO_PATH = "assets/logo_urutau.svg"
+
+st.set_page_config(
+    page_title="URUTAU | Smart Planting Calendar",
+    page_icon=ICON_PATH if os.path.exists(ICON_PATH) else "🦉",
+    layout="wide",
+)
 
 CROPS_META = {
     "Zea mays": ("Corn (Milho)", "grain", "First Quarter"),
@@ -84,8 +91,8 @@ def score_crop(row_eco, rain_7d: float, tmean: float, moon_key: str) -> tuple[st
 # --- 2. INTERFACE ---
 df_clima, df_eco = load_data()
 
-if os.path.exists("assets/logo_urutau.svg"):
-    st.sidebar.image("assets/logo_urutau.svg", use_container_width=True)
+if os.path.exists(LOGO_PATH):
+    st.sidebar.image(LOGO_PATH, use_container_width=True)
 
 target_date = st.sidebar.date_input(
     "📅 Choose Planting Date (Any Year):",
@@ -112,7 +119,13 @@ tmax = float(clima["T2M_MAX"])
 tmin = float(clima["T2M_MIN"])
 moon_key, moon_label, moon_illum, moon_tip = get_moon_info(target_date)
 
-st.title("🦉 URUTAU — What & When to Plant")
+col_icon, col_title = st.columns([0.06, 0.94])
+with col_icon:
+    if os.path.exists(ICON_PATH):
+        st.image(ICON_PATH, width=52)
+with col_title:
+    st.title("URUTAU — What & When to Plant")
+
 st.caption(f"Araçuaí, MG (Jequitinhonha Valley) • Target Date: **{target_date.strftime('%Y-%m-%d')}** • NASA POWER + FAO EcoCrop + Ephem")
 
 # Top KPIs
