@@ -30,6 +30,8 @@ def load_data():
         df_clima["YEAR"].astype(int).astype(str) + df_clima["DOY"].astype(int).astype(str).str.zfill(3),
         format="%Y%j",
     )
+    df_clima = df_clima.sort_values("DATE").ffill().bfill().reset_index(drop=True)
+
     if "T2M_MAX" not in df_clima.columns:
         df_clima["T2M_MAX"] = df_clima["T2M"] + 5.5
     if "T2M_MIN" not in df_clima.columns:
@@ -137,7 +139,7 @@ for _, row in df_eco.iterrows():
     })
 
 df_recs = pd.DataFrame(recs).sort_values("Status")
-st.dataframe(df_recs, use_container_width=True, hide_index=True)
+st.dataframe(df_recs, width="stretch", hide_index=True)
 
 # --- 4. CLIMATE CONTEXT CHART ---
 fig = go.Figure()
@@ -150,4 +152,4 @@ fig.update_layout(
     height=320,
     margin=dict(l=10, r=10, t=40, b=10),
 )
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
