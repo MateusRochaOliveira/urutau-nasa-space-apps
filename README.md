@@ -11,8 +11,8 @@
 ---
 
 ### 🔗 Live Demo & Source Code
-* **Interactive Web App:** [https://urutau-nasa-space-apps.streamlit.app](https://urutau-nasa-space-apps.streamlit.app) *(update with your exact Streamlit Cloud URL)*
-* **Repository:** [github.com/MateusRochaOliveira/urutau-nasa-space-apps](https://github.com/MateusRochaOliveira/urutau-nasa-space-apps)
+- **Interactive Web App:** [https://urutau-nasa-space-apps.streamlit.app](https://urutau-nasa-space-apps.streamlit.app)
+- **Repository:** [github.com/MateusRochaOliveira/urutau-nasa-space-apps](https://github.com/MateusRochaOliveira/urutau-nasa-space-apps)
 
 ---
 
@@ -37,7 +37,7 @@ To guarantee scientific reproducibility, low latency, and reliable execution in 
   * `T2M`: MERRA-2 Air Temperature at 2 Meters ($^\circ\text{C}$), with automated diurnal amplitude estimation (`T2M_MAX`, `T2M_MIN`) when sub-daily extremes are omitted.
   * `RH2M`: MERRA-2 Relative Humidity at 2 Meters ($\%$).
   * `PRECTOTCORR`: MERRA-2 Bias-Corrected Precipitation ($\text{mm/day}$), aggregated into a 7-day rolling moisture recharge metric (`RAIN_7D`).
-  * *Data Cleaning:* Sentinel missing values (`-999.0`, resulting from standard 2–3 day satellite assimilation latency at the end of the extraction window) are masked during ingestion prior to statistical aggregation.
+  * *Data Cleaning:* Sentinel missing values (`-999.0`, resulting from standard 2–3 day satellite assimilation latency at the end of the extraction window) are masked and forward-filled during ingestion prior to statistical aggregation.
 
 ### 2. Crop Ecological & Physiological Requirements — FAO EcoCrop
 - **File:** `data/ecocrop.parquet`
