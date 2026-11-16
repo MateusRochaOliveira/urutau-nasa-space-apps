@@ -11,7 +11,7 @@
 ---
 
 ### 🔗 Live Demo & Source Code
-- **Interactive Web App:** [https://urutau-nasa-space-apps.streamlit.app](https://urutau-nasa-space-apps.streamlit.app)
+- **Interactive Web App:** [https://urutau-jequitinhonha.streamlit.app/)
 - **Repository:** [github.com/MateusRochaOliveira/urutau-nasa-space-apps](https://github.com/MateusRochaOliveira/urutau-nasa-space-apps)
 
 ---
