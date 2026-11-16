@@ -59,24 +59,24 @@ def get_moon_info(selected_date: date):
         return "Last Quarter", "🌗 Last Quarter", illum, "Ideal for hardy, drought-tolerant crops (sorghum) and pruning."
 
 
-def score_crop(row_eco, rain_7d: float, tmax: float, tmin: float, moon_key: str) -> tuple[str, str]:
+def score_crop(row_eco, rain_7d: float, tmean: float, moon_key: str) -> tuple[str, str]:
     sci = row_eco["scientificname"]
-    common, _, ideal_moon = CROPS_META[sci]
+    _, _, ideal_moon = CROPS_META[sci]
     opt_min = float(row_eco["topmn"]) if pd.notna(row_eco["topmn"]) else 18.0
     opt_max = float(row_eco["topmx"]) if pd.notna(row_eco["topmx"]) else 32.0
     rmin = float(row_eco["rmin"]) if pd.notna(row_eco["rmin"]) else 400.0
 
-    # Hardy crops (sorghum, cassava, cowpea) tolerate lower initial moisture
-    min_rain_needed = 8.0 if rmin <= 450 else 15.0
-    temp_ok = (opt_min - 2) <= tmax <= (opt_max + 2) and tmin >= 10.0
+    # Hardy semi-arid crops tolerate lower initial moisture
+    min_rain_needed = 8.0 if rmin <= 550 else 15.0
+    temp_ok = (opt_min - 2.0) <= tmean <= (opt_max + 2.0)
     lunar_bonus = " + 🌙 Lunar Match" if moon_key == ideal_moon else ""
 
     if rain_7d >= min_rain_needed and temp_ok:
-        return "✅ Recommended Now", f"Adequate moisture ({rain_7d:.1f} mm) & thermal fit ({opt_min:.0f}–{opt_max:.0f}°C){lunar_bonus}"
-    elif rain_7d >= min_rain_needed * 0.5 and temp_ok:
-        return "⚠️ Sow with Caution", f"Marginal rain ({rain_7d:.1f} mm); light irrigation helps{lunar_bonus}"
+        return "✅ Recommended Now", f"Good moisture ({rain_7d:.1f} mm) & thermal fit ({opt_min:.0f}–{opt_max:.0f}°C){lunar_bonus}"
+    elif (rain_7d >= min_rain_needed * 0.5 and temp_ok) or (rain_7d >= min_rain_needed):
+        return "⚠️ Sow with Caution", f"Marginal rain ({rain_7d:.1f} mm) or temperature ({tmean:.1f}°C){lunar_bonus}"
     else:
-        return "🛑 Wait / Avoid", f"Too dry ({rain_7d:.1f} mm) or outside optimal temperature ({opt_min:.0f}–{opt_max:.0f}°C)"
+        return "🛑 Wait / Avoid", f"Moisture deficit ({rain_7d:.1f} mm) or outside thermal range ({opt_min:.0f}–{opt_max:.0f}°C)"
 
 
 # --- 2. INTERFACE ---
@@ -97,13 +97,15 @@ target_ts = pd.Timestamp(target_date)
 match = df_clima[df_clima["DATE"] == target_ts]
 if not match.empty:
     clima = match.iloc[0]
-    history = df_clima[df_clima["DATE"] <= target_ts].tail(30)
+    history = df_clima[df_clima["DATE"] <= target_ts].tail(30).copy()
 else:
     doy = min(target_ts.dayofyear, int(df_clima["DOY_NUM"].max()))
     clima = df_clima[df_clima["DOY_NUM"] == doy].iloc[0]
-    history = df_clima[df_clima["DOY_NUM"] <= doy].tail(30)
+    history = df_clima[df_clima["DOY_NUM"] <= doy].tail(30).copy()
+    history["DATE"] = pd.date_range(end=target_ts, periods=len(history), freq="D")
 
 rain_7d = float(clima["RAIN_7D"])
+tmean = float(clima["T2M"])
 tmax = float(clima["T2M_MAX"])
 tmin = float(clima["T2M_MIN"])
 moon_key, moon_label, moon_illum, moon_tip = get_moon_info(target_date)
@@ -114,7 +116,7 @@ st.caption(f"Araçuaí, MG (Jequitinhonha Valley) • Target Date: **{target_dat
 # Top KPIs
 c1, c2, c3 = st.columns(3)
 c1.metric("7-Day Rainfall", f"{rain_7d:.1f} mm")
-c2.metric("Temperature (Min / Max)", f"{tmin:.1f}°C / {tmax:.1f}°C")
+c2.metric("Temperature (Mean | Min/Max)", f"{tmean:.1f}°C ({tmin:.0f}°/{tmax:.0f}°C)")
 c3.metric("Lunar Phase", moon_label, f"{moon_illum:.0f}% illuminated")
 
 st.info(f"**🌙 Lunar Guidance for {target_date.strftime('%b %d, %Y')}:** {moon_tip}")
@@ -126,7 +128,7 @@ recs = []
 for _, row in df_eco.iterrows():
     sci = row["scientificname"]
     common, _, ideal_moon = CROPS_META[sci]
-    status, reason = score_crop(row, rain_7d, tmax, tmin, moon_key)
+    status, reason = score_crop(row, rain_7d, tmean, moon_key)
     recs.append({
         "Status": status,
         "Crop": f"{common} — {sci}",
@@ -140,9 +142,9 @@ st.dataframe(df_recs, use_container_width=True, hide_index=True)
 # --- 4. CLIMATE CONTEXT CHART ---
 fig = go.Figure()
 fig.add_trace(go.Bar(x=history["DATE"], y=history["PRECTOTCORR"], name="Daily Rain (mm)", marker_color="#1E88E5"))
-fig.add_trace(go.Scatter(x=history["DATE"], y=history["T2M_MAX"], name="Max Temp (°C)", yaxis="y2", line=dict(color="#E53935", width=2)))
+fig.add_trace(go.Scatter(x=history["DATE"], y=history["T2M"], name="Mean Temp (°C)", yaxis="y2", line=dict(color="#E53935", width=2)))
 fig.update_layout(
-    title="30-Day Rainfall & Temperature Context",
+    title=f"30-Day Rainfall & Temperature Context ({target_date.year})",
     yaxis=dict(title="Rainfall (mm)"),
     yaxis2=dict(title="Temp (°C)", overlaying="y", side="right"),
     height=320,
